@@ -25,35 +25,117 @@ namespace PRMasterServer.Servers
             string response = String.Empty;
             int requiredValues = 0;
             state.Name = String.Empty;
+            string errorMessage = string.Empty; // Variable to hold potential error message
+
             if (keyValues.ContainsKey("uniquenick")) { state.Name = keyValues["uniquenick"]; requiredValues++; }
             if (keyValues.ContainsKey("challenge")) { state.ClientChallenge = keyValues["challenge"]; requiredValues++; }
             if (keyValues.ContainsKey("response")) { response = keyValues["response"]; requiredValues++; }
+
             if (requiredValues != 3)
-                return DataFunctions.StringToBytes(@"\error\\err\0\fatal\\errmsg\Invalid Query!\id\1\final\");
-            var clientData = LoginDatabase.Instance.GetData(state.Name);
-            if (clientData != null)
             {
-                state.PasswordEncrypted = (string)clientData["passwordenc"];
-                if (response == GenerateResponseValue(ref state))
-                {
-                    ushort session = GenerateSession(state.Name);
-                    string proof = String.Format(@"\lc\2\sesskey\{0}\proof\{1}\userid\{2}\profileid\{3}\uniquenick\{4}\lt\{5}\id\1\final\",
-                        session, GenerateProofValue(state), clientData["userid"], clientData["profileid"], state.Name,
-                        _random.GetString(22, "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ][") + "__");
-                    LoginDatabase.Instance.LogLogin(state.Name, ((IPEndPoint)state.Socket.RemoteEndPoint).Address);
-                    state.State++;
-                    return DataFunctions.StringToBytes(proof);
-                }
-                else
-                {
-                    return DataFunctions.StringToBytes(@"\error\\err\260\fatal\\errmsg\The password provided is incorrect.\id\1\final\");
-                }
+                errorMessage = @"\error\\err\0\fatal\\errmsg\Invalid Query!\id\1\final\";
+                Console.WriteLine($"[ERROR] Invalid Query: Required values not met ({requiredValues}/3)");
             }
             else
             {
-                return DataFunctions.StringToBytes(String.Format(@"\error\\err\265\fatal\\errmsg\Username [{0}] doesn't exist!\id\1\final\", state.Name));
+                Console.WriteLine($"[DEBUG] Received Login Query from client:");
+                Console.WriteLine($"[DEBUG]   uniquenick: {state.Name}");
+                Console.WriteLine($"[DEBUG]   client challenge: {state.ClientChallenge}");
+                Console.WriteLine($"[DEBUG]   client response: {response}");
+
+                var clientData = LoginDatabase.Instance.GetData(state.Name);
+                if (clientData != null)
+                {
+                    state.PasswordEncrypted = (string)clientData["passwordenc"];
+
+                    Console.WriteLine($"[DEBUG] User found in DB: {state.Name}");
+                    Console.WriteLine($"[DEBUG]   PasswordEncrypted from DB: {state.PasswordEncrypted}");
+                    string decryptedPass = DecryptPassword(state.PasswordEncrypted);
+                    Console.WriteLine($"[DEBUG]   Decrypted Password (after gsBase64Decode & gsEncode): {decryptedPass}");
+
+                    string expectedResponse = GenerateResponseValue(ref state);
+                    Console.WriteLine($"[DEBUG]   Server calculated EXPECTED response: {expectedResponse}");
+
+                    if (response == expectedResponse)
+                    {
+                        // ... בתוך ה-if (response == expectedResponse) בלוק ...
+                        ushort session = GenerateSession(state.Name);
+                        string proofMessage = String.Format(@"\lc\2\sesskey\{0}\proof\{1}\userid\{2}\profileid\{3}\uniquenick\{4}\lt\{5}\id\1\final\",
+                                                session, GenerateProofValue(state), clientData["userid"], clientData["profileid"], state.Name,
+                                                _random.GetString(22, "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ") + "__");
+
+                        Console.WriteLine($"[DEBUG] Login successful for {state.Name}. Sending proof message:");
+                        Console.WriteLine($"[DEBUG]   Proof String: {proofMessage}"); // הוסף את השורה הזו!
+                                                                                      // ... (שאר הקוד) ...
+                        return DataFunctions.StringToBytes(proofMessage);
+                        //ushort session = GenerateSession(state.Name);
+                        //string proof = String.Format(@"\lc\2\sesskey\{0}\proof\{1}\userid\{2}\profileid\{3}\uniquenick\{4}\lt\{5}\id\1\final\",
+                        //                                session, GenerateProofValue(state), clientData["userid"], clientData["profileid"], state.Name,
+                        //                                _random.GetString(22, "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ][") + "__");
+                        //LoginDatabase.Instance.LogLogin(state.Name, ((IPEndPoint)state.Socket.RemoteEndPoint).Address);
+                        //state.State++;
+                        //Console.WriteLine($"[DEBUG] Login successful for {state.Name}. Sending proof.");
+                        //return DataFunctions.StringToBytes(proof); // This is now the ONLY explicit return path for success
+                    }
+                    else
+                    {
+                        errorMessage = @"\error\\err\260\fatal\\errmsg\The password provided is incorrect.\id\1\final\";
+                        Console.WriteLine($"[ERROR] Login failed for {state.Name}: Client response '{response}' DOES NOT MATCH server expected response '{expectedResponse}'");
+                    }
+                }
+                else // clientData == null
+                {
+                    errorMessage = String.Format(@"\error\\err\265\fatal\\errmsg\Username [{0}] doesn't exist!\id\1\final\", state.Name);
+                    Console.WriteLine($"[ERROR] Login failed: Username [{state.Name}] doesn't exist in database.");
+                }
             }
+
+            // If we reached here, it means there was an error (either requiredValues != 3,
+            // or clientData was null, or password didn't match).
+            // Now, we guarantee a return for all error paths.
+            // If errorMessage is still empty here, it means an unhandled scenario occurred.
+            if (string.IsNullOrEmpty(errorMessage))
+            {
+                Console.WriteLine("[FATAL] SendProof function encountered an unhandled scenario.");
+                errorMessage = @"\error\\err\1\fatal\\errmsg\Internal Server Error (Unhandled)!\id\1\final\";
+            }
+
+            return DataFunctions.StringToBytes(errorMessage);
         }
+        //public static byte[] SendProof(ref LoginSocketState state, Dictionary<string, string> keyValues)
+        //{
+        //    string response = String.Empty;
+        //    int requiredValues = 0;
+        //    state.Name = String.Empty;
+        //    if (keyValues.ContainsKey("uniquenick")) { state.Name = keyValues["uniquenick"]; requiredValues++; }
+        //    if (keyValues.ContainsKey("challenge")) { state.ClientChallenge = keyValues["challenge"]; requiredValues++; }
+        //    if (keyValues.ContainsKey("response")) { response = keyValues["response"]; requiredValues++; }
+        //    if (requiredValues != 3)
+        //        return DataFunctions.StringToBytes(@"\error\\err\0\fatal\\errmsg\Invalid Query!\id\1\final\");
+        //    var clientData = LoginDatabase.Instance.GetData(state.Name);
+        //    if (clientData != null)
+        //    {
+        //        state.PasswordEncrypted = (string)clientData["passwordenc"];
+        //        if (response == GenerateResponseValue(ref state))
+        //        {
+        //            ushort session = GenerateSession(state.Name);
+        //            string proof = String.Format(@"\lc\2\sesskey\{0}\proof\{1}\userid\{2}\profileid\{3}\uniquenick\{4}\lt\{5}\id\1\final\",
+        //                session, GenerateProofValue(state), clientData["userid"], clientData["profileid"], state.Name,
+        //                _random.GetString(22, "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ][") + "__");
+        //            LoginDatabase.Instance.LogLogin(state.Name, ((IPEndPoint)state.Socket.RemoteEndPoint).Address);
+        //            state.State++;
+        //            return DataFunctions.StringToBytes(proof);
+        //        }
+        //        else
+        //        {
+        //            return DataFunctions.StringToBytes(@"\error\\err\260\fatal\\errmsg\The password provided is incorrect.\id\1\final\");
+        //        }
+        //    }
+        //    else
+        //    {
+        //        return DataFunctions.StringToBytes(String.Format(@"\error\\err\265\fatal\\errmsg\Username [{0}] doesn't exist!\id\1\final\", state.Name));
+        //    }
+        //}
 
         public static byte[] SendProfile(ref LoginSocketState state, Dictionary<string, string> keyValues, bool retrieve)
         {

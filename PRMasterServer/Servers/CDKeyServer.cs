@@ -126,7 +126,8 @@ namespace PRMasterServer.Servers
 				if (decrypted != @"\ka\") {
 					Match m = _dataPattern.Match(decrypted);
 
-					if (m.Success) {
+					if (m.Success)
+					{
 						Log(Category, String.Format("Received request from: {0}:{1}", ((IPEndPoint)e.RemoteEndPoint).Address, ((IPEndPoint)e.RemoteEndPoint).Port));
 
 						string reply = String.Format(_dataResponse, m.Groups["Challenge"].Value.Substring(0, 32), m.Groups["Key"].Value);
@@ -134,11 +135,18 @@ namespace PRMasterServer.Servers
 						byte[] response = Encoding.UTF8.GetBytes(Xor(reply));
 						_socket.SendTo(response, remote);
 					}
-				}
-			} catch (Exception) {
+					else
+					{
+                        Log(Category, $"[WARNING] CD Key Pattern Mismatch! Decrypted data: '{decrypted}'");
+                        Log(Category, $"[WARNING] Expected pattern: {_dataPattern.ToString()}"); // הוסף כדי להציג את ה-regex המלא
+
+                    }
+                }
+			} catch (Exception ex) {
+                LogError(Category, $"[ERROR] Exception in OnDataReceived (CDKey): {ex.ToString()}");
 			}
 
-			WaitForData();
+            WaitForData();
 		}
 
 		private static string Xor(string s)

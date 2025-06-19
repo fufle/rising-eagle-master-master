@@ -3,6 +3,10 @@
   "WorkspaceRootPath": "E:\\rising-eagle-master-master\\",
   "Documents": [
     {
+      "AbsoluteMoniker": "D:0:0:{64BC01A8-FCD2-4AB7-8811-3200F83AE124}|PRMasterServer\\PRMasterServer.csproj|e:\\rising-eagle-master-master\\prmasterserver\\servers\\cdkeyserver.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{64BC01A8-FCD2-4AB7-8811-3200F83AE124}|PRMasterServer\\PRMasterServer.csproj|solutionrelative:prmasterserver\\servers\\cdkeyserver.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{64BC01A8-FCD2-4AB7-8811-3200F83AE124}|PRMasterServer\\PRMasterServer.csproj|e:\\rising-eagle-master-master\\prmasterserver\\servers\\loginservermessages.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{64BC01A8-FCD2-4AB7-8811-3200F83AE124}|PRMasterServer\\PRMasterServer.csproj|solutionrelative:prmasterserver\\servers\\loginservermessages.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
@@ -19,12 +23,25 @@
             {
               "$type": "Document",
               "DocumentIndex": 0,
+              "Title": "CDKeyServer.cs",
+              "DocumentMoniker": "E:\\rising-eagle-master-master\\PRMasterServer\\Servers\\CDKeyServer.cs",
+              "RelativeDocumentMoniker": "PRMasterServer\\Servers\\CDKeyServer.cs",
+              "ToolTip": "E:\\rising-eagle-master-master\\PRMasterServer\\Servers\\CDKeyServer.cs",
+              "RelativeToolTip": "PRMasterServer\\Servers\\CDKeyServer.cs",
+              "ViewState": "AgIAAHwAAAAAAAAAAAAmwJIAAAADAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-19T03:25:56.953Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
               "Title": "LoginServerMessages.cs",
               "DocumentMoniker": "E:\\rising-eagle-master-master\\PRMasterServer\\Servers\\LoginServerMessages.cs",
               "RelativeDocumentMoniker": "PRMasterServer\\Servers\\LoginServerMessages.cs",
               "ToolTip": "E:\\rising-eagle-master-master\\PRMasterServer\\Servers\\LoginServerMessages.cs",
               "RelativeToolTip": "PRMasterServer\\Servers\\LoginServerMessages.cs",
-              "ViewState": "AgIAAEwBAAAAAAAAAAAAwFMBAAABAAAAAAAAAA==",
+              "ViewState": "AgIAADMAAAAAAAAAAAAmwEAAAACFAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-06-19T00:37:30.205Z",
               "EditorCaption": ""
